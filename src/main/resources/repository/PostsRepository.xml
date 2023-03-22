@@ -9,4 +9,9 @@
     <select id="select" resultMap="postsMap">
         SELECT * FROM posts;
     </select>
+
+    <insert id="insert">
+        INSERT INTO posts (id, content, user_id)
+        VALUES (#{id}, #{content}, #{user_id})
+    </insert>
 </mapper>

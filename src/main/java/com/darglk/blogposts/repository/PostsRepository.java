@@ -8,4 +8,6 @@ import java.util.List;
 @Mapper
 public interface PostsRepository {
     List<PostEntity> select();
+
+    void insert(String id, String userId, String content);
 }

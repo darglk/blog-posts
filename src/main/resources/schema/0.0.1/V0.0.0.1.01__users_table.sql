@@ -1,0 +1,4 @@
+CREATE TABLE users (
+    id VARCHAR(36) NOT NULL PRIMARY KEY,
+    username VARCHAR(100) NOT NULL unique
+);
