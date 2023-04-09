@@ -7,8 +7,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
-public class PostEntity {
+public class CommentEntity {
     private String id;
-    private String content;
+    private String postId;
     private String userId;
+    private String content;
 }

@@ -4,14 +4,23 @@
     <resultMap id="postsMap" type="com.darglk.blogposts.repository.entity.PostEntity">
         <id property="id" column="id" />
         <result property="content" column="content" />
+        <result property="userId" column="user_id" />
     </resultMap>
 
     <select id="select" resultMap="postsMap">
         SELECT * FROM posts;
     </select>
 
+    <select id="selectById" resultType="com.darglk.blogposts.repository.entity.PostEntity">
+        SELECT * FROM posts WHERE id = #{postId}
+    </select>
+
     <insert id="insert">
         INSERT INTO posts (id, content, user_id)
-        VALUES (#{id}, #{content}, #{user_id})
+        VALUES (#{id}, #{content}, #{userId})
     </insert>
+
+    <delete id="delete">
+        DELETE FROM posts WHERE id = #{postId}
+    </delete>
 </mapper>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.darglk.blogposts.repository.CommentsFavoritesRepository">
+
+    <select id="exists" resultType="boolean">
+        SELECT EXISTS (SELECT comment_id, user_id FROM comment_favorites WHERE comment_id = #{commentId} AND user_id = #{userId})
+    </select>
+
+    <insert id="insert">
+        INSERT INTO comment_favorites (comment_id, user_id) VALUES (#{commentId}, #{userId}) ON CONFLICT (comment_id, user_id) DO NOTHING
+    </insert>
+
+    <delete id="delete">
+        DELETE FROM comment_favorites WHERE comment_id = #{commentId} AND user_id = #{userId}
+    </delete>
+</mapper>

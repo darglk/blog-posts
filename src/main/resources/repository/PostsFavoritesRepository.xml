@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.darglk.blogposts.repository.PostsFavoritesRepository">
+
+    <select id="exists" resultType="boolean">
+        SELECT EXISTS (SELECT post_id, user_id FROM post_favorites WHERE post = #{postId} AND user_id = #{userId})
+    </select>
+
+    <insert id="insert">
+        INSERT INTO post_favorites (post_id, user_id) VALUES (#{postId}, #{userId}) ON CONFLICT (post_id, user_id) DO NOTHING
+    </insert>
+
+    <delete id="delete">
+        DELETE FROM post_favorites WHERE post_id = #{postId} AND user_id = #{userId}
+    </delete>
+</mapper>

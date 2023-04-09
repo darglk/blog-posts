@@ -7,8 +7,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
-public class PostEntity {
-    private String id;
-    private String content;
-    private String userId;
+public class PostTagEntity {
+    private String tagName;
+    private String postId;
 }

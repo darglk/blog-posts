@@ -5,6 +5,10 @@
         <id property="name" column="name" />
     </resultMap>
 
+    <select id="exists" resultType="boolean">
+        SELECT EXISTS (SELECT name FROM tags WHERE name = #{name})
+    </select>
+
     <insert id="insert">
         INSERT INTO tags (name) VALUES (#{name}) ON CONFLICT (name) DO NOTHING
     </insert>

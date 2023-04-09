@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.darglk.blogposts.repository.PostAttachmentsRepository">
+    <resultMap id="attachmentsMap" type="com.darglk.blogposts.repository.entity.PostAttachmentEntity">
+        <result property="postId" column="post_id" />
+        <result property="url" column="url" />
+    </resultMap>
+
+    <select id="select" resultMap="attachmentsMap">
+        SELECT * FROM post_attachments WHERE post_id = #{postId};
+    </select>
+
+    <insert id="insert">
+        INSERT INTO post_attachments (post_id, url)
+        VALUES (#{postId}, #{url})
+    </insert>
+</mapper>

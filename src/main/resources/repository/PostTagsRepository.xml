@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.darglk.blogposts.repository.PostTagsRepository">
+    <resultMap id="postTagMap" type="com.darglk.blogposts.repository.entity.PostTagEntity">
+        <result property="tagname" column="tag_name" />
+        <result property="postId" column="post_id" />
+    </resultMap>
+
+    <insert id="insert">
+        INSERT INTO post_tags (post_id, name) VALUES (#{postId}, #{name})
+    </insert>
+</mapper>
