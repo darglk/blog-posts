@@ -24,4 +24,8 @@
     <delete id="delete">
         DELETE FROM post_comments WHERE id = #{commentId}
     </delete>
+
+    <update id="update">
+        UPDATE post_comments SET content = #{content} WHERE id = #{commentId} AND user_id = #{userId}
+    </update>
 </mapper>

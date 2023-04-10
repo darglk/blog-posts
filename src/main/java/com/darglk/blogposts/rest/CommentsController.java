@@ -51,4 +51,31 @@ public class CommentsController {
     public void toggleFavorite(@PathVariable("commentId") String commentId) {
         commentsService.toggleFavorite(commentId);
     }
+
+    @PostMapping(path = "/{commentId}/attachment", consumes = { APPLICATION_JSON_VALUE, MULTIPART_FORM_DATA_VALUE})
+    public void addAttachment(
+            @PathVariable("commentId") String commentId,
+            @RequestPart(value = "file") MultipartFile file) {
+        commentsService.addAttachment(commentId, file);
+    }
+
+    @DeleteMapping("/{postId}/attachment/{attachmentId}")
+    public void removeAttachment(
+            @PathVariable("commentId") String commentId,
+            @PathVariable("attachmentId") String attachmentId
+    ) {
+        commentsService.removeAttachment(commentId, attachmentId);
+    }
+
+    @PutMapping("/{commentId}")
+    public CommentResponse updateComment(
+            @PathVariable("commentId") String commentId,
+            @Valid @RequestBody CommentRequest commentRequest,
+            Errors errors
+    ) {
+        if (errors.hasErrors()) {
+            throw new ValidationException(errors);
+        }
+        return commentsService.updateComment(commentId, commentRequest);
+    }
 }

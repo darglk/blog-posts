@@ -1,5 +1,7 @@
 package com.darglk.blogposts.service;
 
+import com.darglk.blogcommons.events.Subjects;
+import com.darglk.blogcommons.events.model.UserCreatedEvent;
 import com.darglk.blogcommons.exception.ErrorResponse;
 import com.darglk.blogcommons.exception.NotFoundException;
 import com.darglk.blogcommons.exception.ValidationException;
@@ -9,6 +11,7 @@ import com.darglk.blogposts.repository.UsersFavoritesRepository;
 import com.darglk.blogposts.repository.UsersRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -57,6 +60,13 @@ public class UsersServiceImpl implements UsersService {
         } else {
             usersBlacklistRepository.delete(favoriteUserId, userId);
             usersFavoritesRepository.insert(favoriteUserId, userId);
+        }
+    }
+
+    @RabbitListener(queues = { Subjects.USER_CREATED_QUEUE })
+    public void createUser(UserCreatedEvent event) {
+        if (usersRepository.exists(event.getUserId())) {
+            usersRepository.insert(event.getUserId(), event.getEmail());
         }
     }
 }

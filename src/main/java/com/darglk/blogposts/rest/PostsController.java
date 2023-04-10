@@ -55,4 +55,31 @@ public class PostsController {
     public void toggleFavorite(@PathVariable("postId") String postId) {
         postsService.toggleFavorite(postId);
     }
+
+    @PostMapping(path = "/{postId}/attachment", consumes = { APPLICATION_JSON_VALUE, MULTIPART_FORM_DATA_VALUE})
+    public void addAttachment(
+            @PathVariable("postId") String postId,
+            @RequestPart(value = "file") MultipartFile file) {
+        postsService.addAttachment(postId, file);
+    }
+
+    @DeleteMapping("/{postId}/attachment/{attachmentId}")
+    public void removeAttachment(
+            @PathVariable("postId") String postId,
+            @PathVariable("attachmentId") String attachmentId
+    ) {
+        postsService.removeAttachment(postId, attachmentId);
+    }
+
+    @PutMapping("/{postId}")
+    public PostResponse updatePost(
+            @PathVariable("postId") String postId,
+            @Valid @RequestBody PostRequest postRequest,
+            Errors errors
+    ) {
+        if (errors.hasErrors()) {
+            throw new ValidationException(errors);
+        }
+        return postsService.updatePost(postId, postRequest);
+    }
 }

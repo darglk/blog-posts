@@ -10,8 +10,16 @@
         SELECT * FROM comment_attachments WHERE comment_id = #{commentId};
     </select>
 
+    <select id="selectByUrl" resultMap="com.darglk.blogposts.repository.entity.CommentAttachmentEntity">
+        SELECT * FROM comment_attachments WHERE comment_id = #{postId} AND url = #{url}
+    </select>
+
     <insert id="insert">
         INSERT INTO comment_attachments (comment_id, url)
         VALUES (#{commentId}, #{url})
     </insert>
+
+    <select id="delete">
+        DELETE FROM comment_attachments WHERE comment_id = #{commentId} AND url = #{url}
+    </select>
 </mapper>

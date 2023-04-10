@@ -13,12 +13,14 @@ import java.util.stream.Collectors;
 public class MockFileServiceImpl implements FileService {
 
     @Override
+    public String uploadFile(MultipartFile file) {
+        log.info("Mocked upload file: {}", file.getName());
+        return UUID.randomUUID().toString();
+    }
+
+    @Override
     public List<String> uploadFiles(List<MultipartFile> files) {
-        return files.stream().map(file -> {
-                    log.info("Mocked upload file: {}", file.getName());
-                    return UUID.randomUUID().toString();
-                }
-        ).collect(Collectors.toList());
+        return files.stream().map(this::uploadFile).collect(Collectors.toList());
     }
 
     @Override

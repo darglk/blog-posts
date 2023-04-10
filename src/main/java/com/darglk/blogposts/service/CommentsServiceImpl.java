@@ -109,4 +109,56 @@ public class CommentsServiceImpl implements CommentsService {
             commentsFavoritesRepository.insert(commentId, userId);
         }
     }
+
+    @Transactional
+    @Override
+    public void addAttachment(String commentId, MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new ValidationException(List.of(new ErrorResponse("File cannot be null or empty", "file")));
+        }
+        if (!allowedFileExtensions.contains(file.getContentType())) {
+            throw new ValidationException(List.of(new ErrorResponse("Incorrect content type", "file")));
+        }
+        var userId = ((UserPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getId();
+        var comment = commentsRepository.selectById(commentId)
+                .orElseThrow(() -> new NotFoundException("Not found comment with id: " + commentId));
+        if (!comment.getUserId().equals(userId)) {
+            throw new ValidationException(List.of(new ErrorResponse("Cannot modify not own comment", "commentId")));
+        }
+
+        var attachments = commentAttachmentsRepository.select(commentId);
+        if (attachments.size() > maxFilesUpload) {
+            throw new ValidationException(List.of(new ErrorResponse("Too many files", "file")));
+        }
+        var fileUrl = fileService.uploadFile(file);
+        commentAttachmentsRepository.insert(new CommentAttachmentEntity(commentId, fileUrl));
+    }
+
+    @Transactional
+    @Override
+    public void removeAttachment(String commentId, String attachmentId) {
+        var userId = ((UserPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getId();
+        var comment = postsRepository.selectById(commentId)
+                .orElseThrow(() -> new NotFoundException("Not found comment with id: " + commentId));
+        if (!comment.getUserId().equals(userId)) {
+            throw new ValidationException(List.of(new ErrorResponse("Cannot modify not own comment", "commentId")));
+        }
+        commentAttachmentsRepository.selectByUrl(commentId, attachmentId)
+                .orElseThrow(() -> new NotFoundException("Not found attachment with id: " + attachmentId));
+        fileService.deleteFile(attachmentId);
+        commentAttachmentsRepository.delete(commentId, attachmentId);
+    }
+
+    @Transactional
+    @Override
+    public CommentResponse updateComment(String commentId, CommentRequest commentRequest) {
+        var userId = ((UserPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getId();
+        var post = postsRepository.selectById(commentId)
+                .orElseThrow(() -> new NotFoundException("Not found comment with id: " + commentId));
+        if (!post.getUserId().equals(userId)) {
+            throw new ValidationException(List.of(new ErrorResponse("Cannot modify not own comment", "commentId")));
+        }
+        commentsRepository.update(commentId, userId, commentRequest.getContent());
+        return new CommentResponse(commentId, commentRequest.getContent(), post.getId(), userId);
+    }
 }

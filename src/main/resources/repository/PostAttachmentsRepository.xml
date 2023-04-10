@@ -10,8 +10,16 @@
         SELECT * FROM post_attachments WHERE post_id = #{postId};
     </select>
 
+    <select id="selectByUrl" resultMap="com.darglk.blogposts.repository.entity.PostAttachmentEntity">
+        SELECT * FROM post_attachments WHERE post_id = #{postId} AND url = #{url}
+    </select>
+
     <insert id="insert">
         INSERT INTO post_attachments (post_id, url)
         VALUES (#{postId}, #{url})
     </insert>
+
+    <select id="delete">
+        DELETE FROM post_attachments WHERE post_id = #{postId} AND url = #{url}
+    </select>
 </mapper>

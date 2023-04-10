@@ -23,4 +23,8 @@
     <delete id="delete">
         DELETE FROM posts WHERE id = #{postId}
     </delete>
+
+    <update id="update">
+        UPDATE posts SET content = #{content} WHERE id = #{postId} AND user_id = #{userId}
+    </update>
 </mapper>

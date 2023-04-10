@@ -128,4 +128,61 @@ public class PostsServiceImpl implements PostsService {
             postsFavoritesRepository.insert(postId, userId);
         }
     }
+
+    @Override
+    @Transactional
+    public void addAttachment(String postId, MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new ValidationException(List.of(new ErrorResponse("File cannot be null or empty", "file")));
+        }
+        if (!allowedFileExtensions.contains(file.getContentType())) {
+            throw new ValidationException(List.of(new ErrorResponse("Incorrect content type", "file")));
+        }
+        var userId = ((UserPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getId();
+        var post = postsRepository.selectById(postId)
+                .orElseThrow(() -> new NotFoundException("Not found post with id: " + postId));
+        if (!post.getUserId().equals(userId)) {
+            throw new ValidationException(List.of(new ErrorResponse("Cannot modify not own post", "postId")));
+        }
+
+        var attachments = postAttachmentsRepository.select(postId);
+        if (attachments.size() > maxFilesUpload) {
+            throw new ValidationException(List.of(new ErrorResponse("Too many files", "file")));
+        }
+        var fileUrl = fileService.uploadFile(file);
+        postAttachmentsRepository.insert(new PostAttachmentEntity(postId, fileUrl));
+    }
+
+    @Transactional
+    @Override
+    public void removeAttachment(String postId, String attachmentId) {
+        var userId = ((UserPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getId();
+        var post = postsRepository.selectById(postId)
+                .orElseThrow(() -> new NotFoundException("Not found post with id: " + postId));
+        if (!post.getUserId().equals(userId)) {
+            throw new ValidationException(List.of(new ErrorResponse("Cannot modify not own post", "postId")));
+        }
+        postAttachmentsRepository.selectByUrl(postId, attachmentId)
+                .orElseThrow(() -> new NotFoundException("Not found attachment with id: " + attachmentId));
+        fileService.deleteFile(attachmentId);
+        postAttachmentsRepository.delete(postId, attachmentId);
+    }
+
+    @Transactional
+    @Override
+    public PostResponse updatePost(String postId, PostRequest postRequest) {
+        var userId = ((UserPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getId();
+        var post = postsRepository.selectById(postId)
+                .orElseThrow(() -> new NotFoundException("Not found post with id: " + postId));
+        if (!post.getUserId().equals(userId)) {
+            throw new ValidationException(List.of(new ErrorResponse("Cannot modify not own post", "postId")));
+        }
+        postsRepository.update(postId, userId, postRequest.getContent());
+        postTagsRepository.delete(postId);
+        postRequest.getTags().forEach(tag -> {
+            tagsRepository.insert(tag.getTag());
+            postTagsRepository.insert(new PostTagEntity(tag.getTag(), postId));
+        });
+        return new PostResponse(postId, postRequest.getContent());
+    }
 }

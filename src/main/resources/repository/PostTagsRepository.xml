@@ -7,6 +7,10 @@
     </resultMap>
 
     <insert id="insert">
-        INSERT INTO post_tags (post_id, name) VALUES (#{postId}, #{name})
+        INSERT INTO post_tags (post_id, name) VALUES (#{postId}, #{name}) ON CONFLICT (post_id, name) DO NOTHING
     </insert>
+
+    <delete id="delete">
+        DELETE FROM post_tags WHERE post_id = #{postId}
+    </delete>
 </mapper>

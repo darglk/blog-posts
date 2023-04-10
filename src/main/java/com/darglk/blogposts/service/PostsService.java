@@ -14,4 +14,10 @@ public interface PostsService {
     void upvotePost(String postId);
 
     void toggleFavorite(String postId);
+
+    void addAttachment(String postId, MultipartFile file);
+
+    void removeAttachment(String postId, String attachmentId);
+
+    PostResponse updatePost(String postId, PostRequest postRequest);
 }

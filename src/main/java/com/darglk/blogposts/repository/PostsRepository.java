@@ -15,4 +15,6 @@ public interface PostsRepository {
     Optional<PostEntity> selectById(String postId);
 
     void delete(String postId);
+
+    void update(String postId, String userId, String content);
 }

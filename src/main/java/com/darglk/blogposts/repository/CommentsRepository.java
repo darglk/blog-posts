@@ -12,4 +12,6 @@ public interface CommentsRepository {
     List<CommentEntity> select(String postId);
     Optional<CommentEntity> selectById(String commentId);
     void delete(String commentId);
+
+    void update(String commentId, String userId, String content);
 }
