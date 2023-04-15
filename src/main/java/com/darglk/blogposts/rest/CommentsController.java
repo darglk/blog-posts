@@ -29,7 +29,8 @@ public class CommentsController {
     public CommentResponse createComment(
             @PathVariable("postId") String postId,
             @Valid @RequestPart("commentRequest") CommentRequest commentRequest,
-            @RequestPart(value = "file", required = false) List<MultipartFile> files, Errors errors) {
+            Errors errors,
+            @RequestPart(value = "file", required = false) List<MultipartFile> files) {
         if (errors.hasErrors()) {
             throw new ValidationException(errors);
         }
@@ -38,12 +39,12 @@ public class CommentsController {
     }
 
     @PostMapping("/{commentId}/upvote")
-    public void upvotePost(@PathVariable("commentId") String commentId) {
+    public void upvoteComment(@PathVariable("commentId") String commentId) {
         commentsService.upvoteComment(commentId);
     }
 
     @DeleteMapping("/{commentId}")
-    public void deletePost(@PathVariable("commentId") String commentId) {
+    public void deleteComment(@PathVariable("commentId") String commentId) {
         commentsService.deleteComment(commentId);
     }
 
@@ -59,7 +60,7 @@ public class CommentsController {
         commentsService.addAttachment(commentId, file);
     }
 
-    @DeleteMapping("/{postId}/attachment/{attachmentId}")
+    @DeleteMapping("/{commentId}/attachment/{attachmentId}")
     public void removeAttachment(
             @PathVariable("commentId") String commentId,
             @PathVariable("attachmentId") String attachmentId

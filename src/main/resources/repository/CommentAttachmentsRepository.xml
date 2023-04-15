@@ -11,7 +11,7 @@
     </select>
 
     <select id="selectByUrl" resultType="com.darglk.blogposts.repository.entity.CommentAttachmentEntity">
-        SELECT * FROM comment_attachments WHERE comment_id = #{postId} AND url = #{url}
+        SELECT * FROM comment_attachments WHERE comment_id = #{commentId} AND url = #{url}
     </select>
 
     <insert id="insert">

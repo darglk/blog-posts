@@ -32,7 +32,7 @@ public class CommentsServiceImpl implements CommentsService {
     private final PostsRepository postsRepository;
     private final CommentsFavoritesRepository commentsFavoritesRepository;
     private final FileService fileService;
-    private final List<String> allowedFileExtensions = List.of("image/gif", "image/jpeg", "image/gif", "image/png");
+    private final List<String> allowedFileExtensions = List.of("image/gif", "image/jpeg", "image/jpg", "image/png");
     @Value("${application.files.upload.max}")
     private Integer maxFilesUpload;
 
@@ -43,10 +43,13 @@ public class CommentsServiceImpl implements CommentsService {
             throw new ValidationException(List.of(new ErrorResponse("Too many files", "file")));
         }
         if (files.stream().anyMatch(MultipartFile::isEmpty)) {
-            throw new ValidationException(List.of(new ErrorResponse("Files cannot be empty", "file")));
+            throw new ValidationException(List.of(new ErrorResponse("At least one file is empty", "file")));
         }
         if (files.stream().anyMatch(file -> !allowedFileExtensions.contains(file.getContentType()))) {
-            throw new ValidationException(List.of(new ErrorResponse("Incorrect content type", "file")));
+            throw new ValidationException(List.of(new ErrorResponse("At least one file has incorrect extension", "file")));
+        }
+        if (postsRepository.selectById(postId).isEmpty()) {
+            throw new NotFoundException("Not found post with id: " + postId);
         }
         var commentId = UUID.randomUUID().toString();
         // TODO: sanitize content type (allow <b><i><quote><a><code>)
@@ -87,7 +90,7 @@ public class CommentsServiceImpl implements CommentsService {
         var post = postsRepository.selectById(comment.getPostId())
                 .orElseThrow(() -> new NotFoundException("Not found post with id: " + comment.getPostId()));
 
-        if (!comment.getUserId().equals(userId) || !post.getUserId().equals(userId)) {
+        if (!comment.getUserId().equals(userId) && !post.getUserId().equals(userId)) {
             throw new ValidationException(List.of(new ErrorResponse("Cannot delete comment", "commentId")));
         }
 
@@ -127,7 +130,7 @@ public class CommentsServiceImpl implements CommentsService {
         }
 
         var attachments = commentAttachmentsRepository.select(commentId);
-        if (attachments.size() > maxFilesUpload) {
+        if (attachments.size() >= maxFilesUpload) {
             throw new ValidationException(List.of(new ErrorResponse("Too many files", "file")));
         }
         var fileUrl = fileService.uploadFile(file);
@@ -138,7 +141,7 @@ public class CommentsServiceImpl implements CommentsService {
     @Override
     public void removeAttachment(String commentId, String attachmentId) {
         var userId = ((UserPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getId();
-        var comment = postsRepository.selectById(commentId)
+        var comment = commentsRepository.selectById(commentId)
                 .orElseThrow(() -> new NotFoundException("Not found comment with id: " + commentId));
         if (!comment.getUserId().equals(userId)) {
             throw new ValidationException(List.of(new ErrorResponse("Cannot modify not own comment", "commentId")));
@@ -153,7 +156,7 @@ public class CommentsServiceImpl implements CommentsService {
     @Override
     public CommentResponse updateComment(String commentId, CommentRequest commentRequest) {
         var userId = ((UserPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getId();
-        var post = postsRepository.selectById(commentId)
+        var post = commentsRepository.selectById(commentId)
                 .orElseThrow(() -> new NotFoundException("Not found comment with id: " + commentId));
         if (!post.getUserId().equals(userId)) {
             throw new ValidationException(List.of(new ErrorResponse("Cannot modify not own comment", "commentId")));

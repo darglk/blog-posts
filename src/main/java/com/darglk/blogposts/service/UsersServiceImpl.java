@@ -64,6 +64,7 @@ public class UsersServiceImpl implements UsersService {
     }
 
     @RabbitListener(queues = { Subjects.USER_CREATED_QUEUE })
+    @Transactional
     public void createUser(UserCreatedEvent event) {
         if (usersRepository.exists(event.getUserId())) {
             usersRepository.insert(event.getUserId(), event.getEmail());
