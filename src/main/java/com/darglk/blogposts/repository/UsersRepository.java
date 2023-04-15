@@ -7,4 +7,5 @@ public interface UsersRepository {
 
     boolean exists(String userId);
     void insert(String id, String name);
+    void delete(String userId);
 }

@@ -17,4 +17,6 @@ public interface PostsRepository {
     void delete(String postId);
 
     void update(String postId, String userId, String content);
+
+    void deleteAll();
 }

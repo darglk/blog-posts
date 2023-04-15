@@ -2,12 +2,16 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.darglk.blogposts.repository.PostTagsRepository">
     <resultMap id="postTagMap" type="com.darglk.blogposts.repository.entity.PostTagEntity">
-        <result property="tagname" column="tag_name" />
+        <result property="tagName" column="tag_name" />
         <result property="postId" column="post_id" />
     </resultMap>
 
+    <select id="select" resultMap="postTagMap">
+        SELECT * FROM post_tags WHERE post_id = #{postId}
+    </select>
+
     <insert id="insert">
-        INSERT INTO post_tags (post_id, name) VALUES (#{postId}, #{name}) ON CONFLICT (post_id, name) DO NOTHING
+        INSERT INTO post_tags (post_id, tag_name) VALUES (#{postId}, #{tagName}) ON CONFLICT (post_id, tag_name) DO NOTHING
     </insert>
 
     <delete id="delete">

@@ -8,4 +8,8 @@
     <insert id="insert">
         INSERT INTO users (id, username) VALUES (#{id}, #{name})
     </insert>
+
+    <delete id="delete">
+        DELETE FROM users where id = #{userId}
+    </delete>
 </mapper>

@@ -27,4 +27,8 @@
     <update id="update">
         UPDATE posts SET content = #{content} WHERE id = #{postId} AND user_id = #{userId}
     </update>
+
+    <delete id="deleteAll">
+        DELETE FROM posts
+    </delete>
 </mapper>

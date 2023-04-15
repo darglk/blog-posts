@@ -56,10 +56,10 @@ public class PostsServiceImpl implements PostsService {
             throw new ValidationException(List.of(new ErrorResponse("Too many files", "file")));
         }
         if (files.stream().anyMatch(MultipartFile::isEmpty)) {
-            throw new ValidationException(List.of(new ErrorResponse("Files cannot be empty", "file")));
+            throw new ValidationException(List.of(new ErrorResponse("At least one file is empty", "file")));
         }
         if (files.stream().anyMatch(file -> !allowedFileExtensions.contains(file.getContentType()))) {
-            throw new ValidationException(List.of(new ErrorResponse("Incorrect content type", "file")));
+            throw new ValidationException(List.of(new ErrorResponse("At least one file has incorrect extension", "file")));
         }
         var postId = UUID.randomUUID().toString();
         // TODO: sanitize content type (allow <b><i><quote><a><code>)

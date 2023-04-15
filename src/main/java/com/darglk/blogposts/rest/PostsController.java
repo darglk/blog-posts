@@ -32,8 +32,8 @@ public class PostsController {
 
     @PostMapping(consumes = { APPLICATION_JSON_VALUE, MULTIPART_FORM_DATA_VALUE})
     public PostResponse createPost(
-            @Valid @RequestPart("postRequest") PostRequest postRequest,
-            @RequestPart(value = "file", required = false) List<MultipartFile> files, Errors errors) {
+            @Valid @RequestPart("postRequest") PostRequest postRequest, Errors errors,
+            @RequestPart(value = "file", required = false) List<MultipartFile> files) {
         if (errors.hasErrors()) {
             throw new ValidationException(errors);
         }

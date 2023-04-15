@@ -10,7 +10,7 @@
         SELECT * FROM post_attachments WHERE post_id = #{postId};
     </select>
 
-    <select id="selectByUrl" resultMap="com.darglk.blogposts.repository.entity.PostAttachmentEntity">
+    <select id="selectByUrl" resultType="com.darglk.blogposts.repository.entity.PostAttachmentEntity">
         SELECT * FROM post_attachments WHERE post_id = #{postId} AND url = #{url}
     </select>
 
