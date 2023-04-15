@@ -146,7 +146,7 @@ public class PostsServiceImpl implements PostsService {
         }
 
         var attachments = postAttachmentsRepository.select(postId);
-        if (attachments.size() > maxFilesUpload) {
+        if (attachments.size() >= maxFilesUpload) {
             throw new ValidationException(List.of(new ErrorResponse("Too many files", "file")));
         }
         var fileUrl = fileService.uploadFile(file);

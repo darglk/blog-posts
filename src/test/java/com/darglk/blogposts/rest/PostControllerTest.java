@@ -25,6 +25,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.*;
@@ -301,6 +302,240 @@ public class PostControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.errors.[*]", hasSize(1)))
                 .andExpect(jsonPath("$.errors.[0].message").value("Not found post with id: post_id"));
+    }
+
+    @Test
+    public void testToggleFavorite() throws Exception {
+        createPost();
+        mockMvc.perform(request(HttpMethod.POST, "/api/v1/posts/post_id/favorite")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+        assertFalse(postsFavoritesRepository.exists("post_id", "4a42f24d-208e-4e08-8f1f-51db0b960a4f"));
+
+        mockMvc.perform(request(HttpMethod.POST, "/api/v1/posts/post_id/favorite")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+        assertTrue(postsFavoritesRepository.exists("post_id", "4a42f24d-208e-4e08-8f1f-51db0b960a4f"));
+    }
+
+    @Test
+    public void testToggleFavorite_notFound() throws Exception {
+        mockMvc.perform(request(HttpMethod.POST, "/api/v1/posts/post_id/favorite")
+                        .header("Authorization", "Bearer " + anotherAccessToken)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.errors.[*]", hasSize(1)))
+                .andExpect(jsonPath("$.errors.[0].message").value("Not found post with id: post_id"));
+    }
+
+    @Test
+    public void testAddAttachment_incorrectExtension() throws Exception {
+        mockMvc.perform(multipart(HttpMethod.POST, "/api/v1/posts/post_id/attachment")
+                        .file(new MockMultipartFile("file", "", "application/json", "alsdfjlaksdjf".getBytes()))
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.[*]", hasSize(1)))
+                .andExpect(jsonPath("$.errors.[0].field").value("file"))
+                .andExpect(jsonPath("$.errors.[*].message").value("Incorrect content type"));
+    }
+
+    @Test
+    public void testAddAttachment_emptyFile() throws Exception {
+        mockMvc.perform(multipart(HttpMethod.POST, "/api/v1/posts/post_id/attachment")
+                        .file(new MockMultipartFile("file", "", "image/png", "".getBytes()))
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.[*]", hasSize(1)))
+                .andExpect(jsonPath("$.errors.[0].field").value("file"))
+                .andExpect(jsonPath("$.errors.[*].message").value("File cannot be null or empty"));
+    }
+
+    @Test
+    public void testAddAttachment_notFound() throws Exception {
+        mockMvc.perform(multipart(HttpMethod.POST, "/api/v1/posts/post_id/attachment")
+                        .file(new MockMultipartFile("file", "", "image/png", "asdfasdf".getBytes()))
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.errors.[*]", hasSize(1)))
+                .andExpect(jsonPath("$.errors.[*].message").value("Not found post with id: post_id"));
+    }
+
+    @Test
+    public void testAddAttachment_notOwnPost() throws Exception {
+        createPost();
+        mockMvc.perform(multipart(HttpMethod.POST, "/api/v1/posts/post_id/attachment")
+                        .file(new MockMultipartFile("file", "", "image/png", "adsfaas".getBytes()))
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.[*]", hasSize(1)))
+                .andExpect(jsonPath("$.errors.[0].field").value("postId"))
+                .andExpect(jsonPath("$.errors.[*].message").value("Cannot modify not own post"));
+    }
+
+    @Test
+    public void testAddAttachment_tooMany() throws Exception {
+        createPost();
+        postAttachmentsRepository.insert(new PostAttachmentEntity("post_id", "asldkfj1"));
+        postAttachmentsRepository.insert(new PostAttachmentEntity("post_id", "asldkfj2"));
+        postAttachmentsRepository.insert(new PostAttachmentEntity("post_id", "asldkfj3"));
+        postAttachmentsRepository.insert(new PostAttachmentEntity("post_id", "asldkfj4"));
+        mockMvc.perform(multipart(HttpMethod.POST, "/api/v1/posts/post_id/attachment")
+                        .file(new MockMultipartFile("file", "", "image/png", "adsfaas".getBytes()))
+                        .header("Authorization", "Bearer " + anotherAccessToken)
+                        .contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.[*]", hasSize(1)))
+                .andExpect(jsonPath("$.errors.[0].field").value("file"))
+                .andExpect(jsonPath("$.errors.[*].message").value("Too many files"));
+    }
+
+    @Test
+    public void testAddAttachment() throws Exception {
+        createPost();
+        mockMvc.perform(multipart(HttpMethod.POST, "/api/v1/posts/post_id/attachment")
+                        .file(new MockMultipartFile("file", "", "image/png", "adsfaas".getBytes()))
+                        .header("Authorization", "Bearer " + anotherAccessToken)
+                        .contentType(MediaType.MULTIPART_FORM_DATA_VALUE))
+                .andExpect(status().isOk());
+        var attachments = postAttachmentsRepository.select("post_id");
+        assertEquals(2, attachments.size());
+    }
+
+    @Test
+    public void testRemoveAttachment_postNotFound() throws Exception {
+        mockMvc.perform(request(HttpMethod.DELETE, "/api/v1/posts/post_id/attachment/asldkfj")
+                        .header("Authorization", "Bearer " + anotherAccessToken)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.errors.[*]", hasSize(1)))
+                .andExpect(jsonPath("$.errors.[*].message").value("Not found post with id: post_id"));
+    }
+
+    @Test
+    public void testRemoveAttachment_notOwnPost() throws Exception {
+        createPost();
+        mockMvc.perform(request(HttpMethod.DELETE, "/api/v1/posts/post_id/attachment/asldkfj")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.[*]", hasSize(1)))
+                .andExpect(jsonPath("$.errors.[*].field").value("postId"))
+                .andExpect(jsonPath("$.errors.[*].message").value("Cannot modify not own post"));
+    }
+
+    @Test
+    public void testRemoveAttachment_attachmentNotFound() throws Exception {
+        createPost();
+        mockMvc.perform(request(HttpMethod.DELETE, "/api/v1/posts/post_id/attachment/111")
+                        .header("Authorization", "Bearer " + anotherAccessToken)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.errors.[*]", hasSize(1)))
+                .andExpect(jsonPath("$.errors.[*].message").value("Not found attachment with id: 111"));
+    }
+
+    @Test
+    public void testRemoveAttachment() throws Exception {
+        createPost();
+        mockMvc.perform(request(HttpMethod.DELETE, "/api/v1/posts/post_id/attachment/asldkfj")
+                        .header("Authorization", "Bearer " + anotherAccessToken)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+        assertFalse(postAttachmentsRepository.selectByUrl("post_id", "asldkfj").isPresent());
+    }
+
+    @Test
+    public void testUpdatePost_notFound() throws Exception {
+        var request = new PostRequest();
+        request.setContent("asdfa1");
+        request.setTags(List.of(new TagRequest("asdf")));
+        mockMvc.perform(request(HttpMethod.PUT, "/api/v1/posts/post_id")
+                        .content(objectMapper.writeValueAsString(request))
+                        .header("Authorization", "Bearer " + anotherAccessToken)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.errors.[*]", hasSize(1)))
+                .andExpect(jsonPath("$.errors.[0].message").value("Not found post with id: post_id"));
+    }
+
+    @Test
+    public void testUpdatePost_notOwnPost() throws Exception {
+        createPost();
+        var request = new PostRequest();
+        request.setContent("asdfa1");
+        request.setTags(List.of(new TagRequest("asdf")));
+        mockMvc.perform(request(HttpMethod.PUT, "/api/v1/posts/post_id")
+                        .content(objectMapper.writeValueAsString(request))
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.[*]", hasSize(1)))
+                .andExpect(jsonPath("$.errors.[0].message").value("Cannot modify not own post"))
+                .andExpect(jsonPath("$.errors.[0].field").value("postId"));
+    }
+
+    @Test
+    public void testUpdatePost_blankContent() throws Exception {
+        createPost();
+        var request = new PostRequest();
+        request.setContent("");
+        request.setTags(List.of(new TagRequest("asdf")));
+        mockMvc.perform(request(HttpMethod.PUT, "/api/v1/posts/post_id")
+                        .content(objectMapper.writeValueAsString(request))
+                        .header("Authorization", "Bearer " + anotherAccessToken)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.[*]", hasSize(2)))
+                .andExpect(jsonPath("$.errors.[0].field").value("content"))
+                .andExpect(jsonPath("$.errors.[1].field").value("content"))
+                .andExpect(jsonPath("$.errors.[*].message").value(Matchers.containsInAnyOrder("must not be blank", "size must be between 5 and 2137")));
+    }
+
+    @Test
+    public void testUpdatePost_blankTag() throws Exception {
+        createPost();
+        var request = new PostRequest();
+        request.setContent("asdfae");
+        request.setTags(List.of(new TagRequest("")));
+        mockMvc.perform(request(HttpMethod.PUT, "/api/v1/posts/post_id")
+                        .content(objectMapper.writeValueAsString(request))
+                        .header("Authorization", "Bearer " + anotherAccessToken)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.[*]", hasSize(2)))
+                .andExpect(jsonPath("$.errors.[0].field").value("tags[0].tag"))
+                .andExpect(jsonPath("$.errors.[1].field").value("tags[0].tag"))
+                .andExpect(jsonPath("$.errors.[*].message").value(Matchers.containsInAnyOrder("must not be blank", "size must be between 2 and 100")));
+    }
+
+    @Test
+    public void testUpdatePost() throws Exception {
+        createPost();
+        tagsRepository.insert("tagtoremove");
+        postTagsRepository.insert(new PostTagEntity("tagtoremove", "post_id"));
+        var request = new PostRequest();
+        request.setContent("new content");
+        request.setTags(List.of(new TagRequest("asdf"), new TagRequest("jklee")));
+        mockMvc.perform(request(HttpMethod.PUT, "/api/v1/posts/post_id")
+                        .content(objectMapper.writeValueAsString(request))
+                        .header("Authorization", "Bearer " + anotherAccessToken)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value("post_id"))
+                .andExpect(jsonPath("$.content").value("new content"));
+
+        var tags = postTagsRepository.select("post_id").stream().map(PostTagEntity::getTagName).collect(Collectors.toList());
+        var post = postsRepository.selectById("post_id");
+        assertEquals(2, tags.size());
+        assertTrue(tags.containsAll(List.of("asdf", "jklee")));
+        assertTrue(post.isPresent());
+        assertEquals("new content", post.get().getContent());
     }
 
     private void createPost() {
