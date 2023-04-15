@@ -102,7 +102,7 @@ public class PostsServiceImpl implements PostsService {
 
     @Transactional
     @Override
-    public void upvotePost(String postId) {
+    public void toggleUpvote(String postId) {
         var userId = ((UserPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getId();
         var post = postsRepository.selectById(postId)
                 .orElseThrow(() -> new NotFoundException("Not found post with id: " + postId));

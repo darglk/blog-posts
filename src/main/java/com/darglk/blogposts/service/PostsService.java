@@ -11,7 +11,7 @@ public interface PostsService {
     PostResponse createPost(String userId, PostRequest request, List<MultipartFile> files);
     void deletePost(String postId);
 
-    void upvotePost(String postId);
+    void toggleUpvote(String postId);
 
     void toggleFavorite(String postId);
 

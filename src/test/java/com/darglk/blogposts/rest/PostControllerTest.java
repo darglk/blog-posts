@@ -1,10 +1,8 @@
 package com.darglk.blogposts.rest;
 
 import com.darglk.blogposts.BlogPostsApplication;
-import com.darglk.blogposts.repository.PostTagsRepository;
-import com.darglk.blogposts.repository.PostsRepository;
-import com.darglk.blogposts.repository.TagsRepository;
-import com.darglk.blogposts.repository.UsersRepository;
+import com.darglk.blogposts.repository.*;
+import com.darglk.blogposts.repository.entity.*;
 import com.darglk.blogposts.rest.model.PostRequest;
 import com.darglk.blogposts.rest.model.TagRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -29,9 +27,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.List;
 
 import static org.hamcrest.Matchers.hasSize;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -54,20 +52,36 @@ public class PostControllerTest {
     private TagsRepository tagsRepository;
     @Autowired
     private PostTagsRepository postTagsRepository;
+    @Autowired
+    private PostAttachmentsRepository postAttachmentsRepository;
+    @Autowired
+    private PostUpvotesRepository postUpvotesRepository;
+    @Autowired
+    private PostsFavoritesRepository postsFavoritesRepository;
+    @Autowired
+    private CommentsRepository commentsRepository;
+    @Autowired
+    private CommentUpvotesRepository commentUpvotesRepository;
+    @Autowired
+    private CommentAttachmentsRepository commentAttachmentsRepository;
+    @Autowired
+    private CommentsFavoritesRepository commentsFavoritesRepository;
 
     private final String accessToken = "4a42f24d-208e-4e08-8f1f-51db0b960a4f:ROLE_USER,ROLE_ADMIN";
+    private final String anotherAccessToken = "5a42f24d-208e-4e08-8f1f-51db0b960a4e:ROLE_USER,ROLE_ADMIN";
     private ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeEach
     public void setup() {
         usersRepository.insert("4a42f24d-208e-4e08-8f1f-51db0b960a4f", "juser");
+        usersRepository.insert("5a42f24d-208e-4e08-8f1f-51db0b960a4e", "another_user");
     }
 
     @AfterEach
     public void teardown() {
         postsRepository.deleteAll();
         usersRepository.delete("4a42f24d-208e-4e08-8f1f-51db0b960a4f");
-
+        usersRepository.delete("5a42f24d-208e-4e08-8f1f-51db0b960a4e");
     }
 
     @Test
@@ -201,5 +215,105 @@ public class PostControllerTest {
                 .andExpect(jsonPath("$.errors.[*]", hasSize(1)))
                 .andExpect(jsonPath("$.errors.[0].field").value("file"))
                 .andExpect(jsonPath("$.errors.[*].message").value("At least one file has incorrect extension"));
+    }
+
+    @Test
+    public void testDeletePost_notFound() throws Exception {
+        mockMvc.perform(request(HttpMethod.DELETE, "/api/v1/posts/notfound")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.errors.[*]", hasSize(1)))
+                .andExpect(jsonPath("$.errors.[0].message").value("Post with id: notfound was not found"));
+    }
+
+    @Test
+    public void testDeletePost_notOwn() throws Exception {
+        createPost();
+        mockMvc.perform(request(HttpMethod.DELETE, "/api/v1/posts/post_id")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.[*]", hasSize(1)))
+                .andExpect(jsonPath("$.errors.[0].message").value("Cannot delete not own post"))
+                .andExpect(jsonPath("$.errors.[0].field").value("postId"));
+    }
+
+    @Test
+    public void testDeletePost() throws Exception {
+        createPost();
+        mockMvc.perform(request(HttpMethod.DELETE, "/api/v1/posts/post_id")
+                        .header("Authorization", "Bearer " + anotherAccessToken)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+        var post = postsRepository.selectById("post_id");
+        var postTags = postTagsRepository.select("post_id");
+        var postAttachments = postAttachmentsRepository.select("post_id");
+        var upvotes = postUpvotesRepository.select("post_id");
+        var comments = commentsRepository.select("post_id");
+        var commentUpvotes = commentUpvotesRepository.select("comment_id");
+        var commentAttachments = commentAttachmentsRepository.select("comment_id");
+
+        assertFalse(postsFavoritesRepository.exists("post_id", "4a42f24d-208e-4e08-8f1f-51db0b960a4f"));
+        assertFalse(commentsFavoritesRepository.exists("comment_id", "5a42f24d-208e-4e08-8f1f-51db0b960a4e"));
+        assertFalse(post.isPresent());
+        assertTrue(postTags.isEmpty());
+        assertTrue(postAttachments.isEmpty());
+        assertTrue(upvotes.isEmpty());
+        assertTrue(comments.isEmpty());
+        assertTrue(commentUpvotes.isEmpty());
+        assertTrue(commentAttachments.isEmpty());
+    }
+
+    @Test
+    public void testToggleUpvote() throws Exception {
+        createPost();
+        mockMvc.perform(request(HttpMethod.POST, "/api/v1/posts/post_id/upvote")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+        assertFalse(postUpvotesRepository.exists("post_id", "4a42f24d-208e-4e08-8f1f-51db0b960a4f"));
+
+        mockMvc.perform(request(HttpMethod.POST, "/api/v1/posts/post_id/upvote")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+        assertTrue(postUpvotesRepository.exists("post_id", "4a42f24d-208e-4e08-8f1f-51db0b960a4f"));
+    }
+
+    @Test
+    public void testToggleUpvote_ownPost() throws Exception {
+        createPost();
+        mockMvc.perform(request(HttpMethod.POST, "/api/v1/posts/post_id/upvote")
+                        .header("Authorization", "Bearer " + anotherAccessToken)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.[*]", hasSize(1)))
+                .andExpect(jsonPath("$.errors.[0].message").value("You cannot upvote your own post"))
+                .andExpect(jsonPath("$.errors.[0].field").value("postId"));
+    }
+
+    @Test
+    public void testToggleUpvote_notFound() throws Exception {
+        mockMvc.perform(request(HttpMethod.POST, "/api/v1/posts/post_id/upvote")
+                        .header("Authorization", "Bearer " + anotherAccessToken)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.errors.[*]", hasSize(1)))
+                .andExpect(jsonPath("$.errors.[0].message").value("Not found post with id: post_id"));
+    }
+
+    private void createPost() {
+        postsRepository.insert("post_id", "5a42f24d-208e-4e08-8f1f-51db0b960a4e", "asldfkj");
+        tagsRepository.insert("jklee");
+        postTagsRepository.insert(new PostTagEntity("jklee", "post_id"));
+        postAttachmentsRepository.insert(new PostAttachmentEntity("post_id", "asldkfj"));
+        postUpvotesRepository.insert(new PostUpvoteEntity("post_id", "4a42f24d-208e-4e08-8f1f-51db0b960a4f"));
+        postsFavoritesRepository.insert("post_id", "4a42f24d-208e-4e08-8f1f-51db0b960a4f");
+
+        commentsRepository.insert(new CommentEntity("comment_id", "post_id", "4a42f24d-208e-4e08-8f1f-51db0b960a4f", "asdfj"));
+        commentsFavoritesRepository.insert("comment_id", "5a42f24d-208e-4e08-8f1f-51db0b960a4e");
+        commentUpvotesRepository.insert(new CommentUpvoteEntity("comment_id", "5a42f24d-208e-4e08-8f1f-51db0b960a4e"));
+        commentAttachmentsRepository.insert(new CommentAttachmentEntity("comment_id", "alsdjkf"));
     }
 }

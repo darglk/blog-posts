@@ -17,4 +17,8 @@
     <delete id="delete">
         DELETE FROM post_upvotes WHERE post_id = #{postId} AND user_id = #{userId}
     </delete>
+
+    <select id="select" resultMap="postUpvoteMap">
+        SELECT * FROM post_upvotes WHERE post_id = #{postId}
+    </select>
 </mapper>

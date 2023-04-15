@@ -3,7 +3,7 @@
 <mapper namespace="com.darglk.blogposts.repository.PostsFavoritesRepository">
 
     <select id="exists" resultType="boolean">
-        SELECT EXISTS (SELECT post_id, user_id FROM post_favorites WHERE post = #{postId} AND user_id = #{userId})
+        SELECT EXISTS (SELECT post_id, user_id FROM post_favorites WHERE post_id = #{postId} AND user_id = #{userId})
     </select>
 
     <insert id="insert">

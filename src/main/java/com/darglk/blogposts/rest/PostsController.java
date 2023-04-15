@@ -47,8 +47,8 @@ public class PostsController {
     }
 
     @PostMapping("/{postId}/upvote")
-    public void upvotePost(@PathVariable("postId") String postId) {
-        postsService.upvotePost(postId);
+    public void toggleUpvote(@PathVariable("postId") String postId) {
+        postsService.toggleUpvote(postId);
     }
 
     @PostMapping("/{postId}/favorite")

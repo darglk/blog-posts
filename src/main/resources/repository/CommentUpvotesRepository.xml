@@ -17,4 +17,8 @@
     <delete id="delete">
         DELETE FROM comment_upvotes WHERE comment_id = #{commentId} AND user_id = #{userId}
     </delete>
+
+    <select id="select" resultMap="commentUpvoteMap">
+        SELECT * FROM comment_upvotes WHERE comment_id = #{commentId}
+    </select>
 </mapper>

@@ -11,7 +11,7 @@
         SELECT * FROM posts;
     </select>
 
-    <select id="selectById" resultType="com.darglk.blogposts.repository.entity.PostEntity">
+    <select id="selectById" resultMap="postsMap">
         SELECT * FROM posts WHERE id = #{postId}
     </select>
 
