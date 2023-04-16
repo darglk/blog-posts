@@ -13,4 +13,8 @@
     <delete id="delete">
         DELETE FROM users_favorites WHERE favorite_user_id = #{favoriteUserId} AND user_id = #{userId}
     </delete>
+
+    <delete id="deleteAll">
+        DELETE FROM users_favorites
+    </delete>
 </mapper>

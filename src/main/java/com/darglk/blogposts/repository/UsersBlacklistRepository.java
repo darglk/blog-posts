@@ -7,4 +7,5 @@ public interface UsersBlacklistRepository {
     void insert(String blacklistedUser, String userId);
     void delete(String blacklistedUser, String userId);
     boolean exists(String blacklistedUser, String userId);
+    void deleteAll();
 }

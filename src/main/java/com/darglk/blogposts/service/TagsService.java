@@ -1,7 +1,7 @@
 package com.darglk.blogposts.service;
 
 public interface TagsService {
-    void blacklistTag(String tag);
+    void toggleBlacklistTag(String tag);
 
     void toggleFavorite(String tag);
 }

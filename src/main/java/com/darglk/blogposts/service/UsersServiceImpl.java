@@ -37,11 +37,11 @@ public class UsersServiceImpl implements UsersService {
         if (blockingUser.equals(userId)) {
             throw new ValidationException(List.of(new ErrorResponse("You cannot blacklist yourself", "userId")));
         }
-        if (!usersBlacklistRepository.exists(blockingUser, userId)) {
-            usersFavoritesRepository.delete(blockingUser, userId);
-            usersBlacklistRepository.insert(blockingUser, userId);
+        if (!usersBlacklistRepository.exists(userId, blockingUser)) {
+            usersFavoritesRepository.delete(userId, blockingUser);
+            usersBlacklistRepository.insert(userId, blockingUser);
         } else {
-            usersBlacklistRepository.delete(blockingUser, userId);
+            usersBlacklistRepository.delete(userId, blockingUser);
         }
     }
 
@@ -55,11 +55,11 @@ public class UsersServiceImpl implements UsersService {
         if (favoriteUserId.equals(userId)) {
             throw new ValidationException(List.of(new ErrorResponse("You cannot favorite yourself", "userId")));
         }
-        if (usersFavoritesRepository.exists(favoriteUserId, userId)) {
-            usersFavoritesRepository.delete(favoriteUserId, userId);
+        if (usersFavoritesRepository.exists(userId, favoriteUserId)) {
+            usersFavoritesRepository.delete(userId, favoriteUserId);
         } else {
-            usersBlacklistRepository.delete(favoriteUserId, userId);
-            usersFavoritesRepository.insert(favoriteUserId, userId);
+            usersBlacklistRepository.delete(userId, favoriteUserId);
+            usersFavoritesRepository.insert(userId, favoriteUserId);
         }
     }
 

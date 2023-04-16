@@ -19,7 +19,7 @@ public class UsersController {
         usersService.blacklistUser(userId);
     }
 
-    @PostMapping("/{userId}/favorite")
+    @PostMapping("/favorite/{userId}")
     public void toggleFavorite(@PathVariable("userId") String userId) {
         usersService.toggleFavorite(userId);
     }

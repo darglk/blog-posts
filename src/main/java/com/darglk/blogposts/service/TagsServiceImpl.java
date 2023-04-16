@@ -21,7 +21,7 @@ public class TagsServiceImpl implements TagsService {
     private final TagsRepository tagsRepository;
 
     @Override
-    public void blacklistTag(String tag) {
+    public void toggleBlacklistTag(String tag) {
         if (!tagsRepository.exists(tag)) {
             throw new NotFoundException("Not found tag with name: " + tag);
         }

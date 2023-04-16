@@ -15,11 +15,11 @@ public class TagsController {
     private final TagsService tagsService;
 
     @PostMapping("/blacklist/{tag}")
-    public void blacklistTag(@PathVariable("tag") String tag) {
-        tagsService.blacklistTag(tag);
+    public void toggleBlacklistTag(@PathVariable("tag") String tag) {
+        tagsService.toggleBlacklistTag(tag);
     }
 
-    @PostMapping("/{tag}/favorite")
+    @PostMapping("/favorite/{tag}")
     public void toggleFavorite(@PathVariable("tag") String tag) {
         tagsService.toggleFavorite(tag);
     }

@@ -11,6 +11,10 @@
     </insert>
 
     <delete id="delete">
-        DELETE FROM users_blacklists WHERE blocked_by_user_id = #{blacklistedUser} AND user_id = #{userId}
+        DELETE FROM users_blacklists WHERE blocked_by_user_id = #{userId} AND user_id = #{blacklistedUser}
+    </delete>
+
+    <delete id="deleteAll">
+        DELETE FROM users_blacklists
     </delete>
 </mapper>

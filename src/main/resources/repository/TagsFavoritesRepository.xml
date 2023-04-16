@@ -13,4 +13,8 @@
     <delete id="delete">
         DELETE FROM tags_favorites WHERE tag_name = #{tagName} AND user_id = #{userId}
     </delete>
+
+    <delete id="deleteAll">
+        DELETE FROM tags_favorites
+    </delete>
 </mapper>
